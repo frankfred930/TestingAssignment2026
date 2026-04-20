@@ -1,0 +1,105 @@
+#******************** Settings ************************
+
+*** Settings ***
+
+Documentation	User Registration Test scenario with verification of valid and invalid credentials. Testing registration form validation, field requirements, and error messages.
+
+Pre Condition	Open browser and navigate to registration page
+Post Condition	Close all browsers
+Tags	Register, TS-2-Register, Positive, Negative
+
+#******************* Common Variables ********************
+
+*** Variables ***
+
+LoginUrl = https://gitlab.com/users/sign_up
+Valid_Username = ********************
+Valid_Email = ********************
+Valid_Password = ********************
+Existing_Username = ********************
+Invalid_Email = invalid-email
+Short_Password = abc
+Empty = 
+
+#******************** Test Cases *************************
+
+*** Test Cases ***
+
+# Positive Tests
+
+Register user with valid username and password
+    Navigate To Registration Page    LoginUrl
+    Input Username    Valid_Username
+    Input Email    Valid_Email
+    Input Password    Valid_Password
+    Confirm Password    Valid_Password
+    Complete Recaptcha    (Manual step - recaptcha cannot be automated)
+    Click Register Button
+    Verify User Is Redirected To Welcome Page Or Onboarding Page
+    # Remember credentials which you are going to use for whole application testing
+
+# Negative Tests
+
+Register user with same existing username
+    Navigate To Registration Page    LoginUrl
+    Input Username    Existing_Username
+    Input Email    newemail@example.com
+    Input Password    Valid_Password
+    Confirm Password    Valid_Password
+    Click Register Button
+    Verify Error Message "Username has already been taken" Is Displayed
+
+Register user with empty password
+    Navigate To Registration Page    LoginUrl
+    Input Username    new_test_user
+    Input Email    newuser@example.com
+    Input Password    Empty
+    Confirm Password    Empty
+    Click Register Button
+    Verify Error Message "Password can't be blank" Is Displayed
+
+Register user with invalid email format
+    Navigate To Registration Page    LoginUrl
+    Input Username    user_with_bad_email
+    Input Email    Invalid_Email
+    Input Password    Valid_Password
+    Confirm Password    Valid_Password
+    Click Register Button
+    Verify Error Message "Email is invalid" Or "Please provide a valid email address" Is Displayed
+
+Register user with password too short (minimum 8 characters required)
+    Navigate To Registration Page    LoginUrl
+    Input Username    user_short_pass
+    Input Email    shortpass@example.com
+    Input Password    Short_Password
+    Confirm Password    Short_Password
+    Click Register Button
+    Verify Error Message "Password is too short (minimum 8 characters)" Is Displayed
+
+Register user with mismatched password confirmation
+    Navigate To Registration Page    LoginUrl
+    Input Username    mismatch_user
+    Input Email    mismatch@example.com
+    Input Password    Valid_Password
+    Confirm Password    ********************
+    Click Register Button
+    Verify Error Message "Password confirmation doesn't match" Is Displayed
+
+Register user with empty username
+    Navigate To Registration Page    LoginUrl
+    Input Username    Empty
+    Input Email    nousername@example.com
+    Input Password    Valid_Password
+    Confirm Password    Valid_Password
+    Click Register Button
+    Verify Error Message "Username can't be blank" Is Displayed
+
+Register user without completing recaptcha
+    Navigate To Registration Page    LoginUrl
+    Input Username    no_recaptcha_user
+    Input Email    norecaptcha@example.com
+    Input Password    Valid_Password
+    Confirm Password    Valid_Password
+    # Skip recaptcha intentionally
+    Click Register Button
+    Verify Error Message About Recaptcha Verification Is Displayed

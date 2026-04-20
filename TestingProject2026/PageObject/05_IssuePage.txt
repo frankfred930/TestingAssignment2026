@@ -1,0 +1,98 @@
+#******************** Settings ************************
+
+*** Settings ***
+Documentation	Issue Test scenario. CRUD Operation: Create, Read, Update, Delete. Testing issue creation within a project.
+
+# TODO: Write Precondition and Postcondition, Tags 
+
+Pre Condition	Project must be created by the user before. User must be logged in and on the project page.
+Post Condition	Delete all test issues created during testing (clean up)
+Tags	Issue, TS-4-Issue, CRUD, Positive, Negative
+
+#******************* Common Variables ********************
+
+
+*** Variables ***
+
+ProjectName = ********************
+IssueUrl = https://gitlab.com/[username]/[projectname]/-/issues/new
+IssueTitle = Test Issue Title
+UpdatedIssueTitle = Updated Issue Title
+SecondIssueTitle = Second Test Issue
+IssueDescription = This is a test issue description for verification purposes.
+EmptyTitle = 
+LongTitle = 
+
+#******************** Test Cases *************************
+
+*** Test Case ***
+
+# Positive Tests
+
+Create issue
+    Precondition: Navigate to the project created earlier
+    Navigate To Issues Page    [ProjectName] > Issues
+    Click New Issue Button
+    Input Issue Title    IssueTitle
+    Input Issue Description    IssueDescription
+    Select Assignee    (Optional - self or other)
+    Select Labels    (Optional - e.g., "bug" or "feature")
+    Select Milestone    (Optional)
+    Click Create Issue Button
+    Verify Issue Is Created Successfully
+    Verify Page Contains Issue Title: IssueTitle
+    Verify Issue URL Contains Issue ID Number
+
+Update name of issue
+    Precondition: Issue from previous test case exists
+    Navigate To Existing Issue    [ProjectName] > Issues > IssueTitle
+    Click Edit Issue Button (pencil icon)
+    Change Title To    UpdatedIssueTitle
+    Click Save Changes Button
+    Verify Updated Issue Title Shows: UpdatedIssueTitle
+    Verify Success Message "Issue was successfully updated"
+
+Create second issue with previous updated name
+    Navigate To Issues Page    [ProjectName] > Issues
+    Click New Issue Button
+    Input Issue Title    UpdatedIssueTitle
+    Input Issue Description    Second issue with same title
+    Click Create Issue Button
+    Verify Second Issue Is Created Successfully Even With Same Title
+    Note: GitLab typically allows duplicate issue titles
+
+Delete first issue
+    Precondition: Two issues exist - original updated issue and second issue
+    Navigate To First Issue    [ProjectName] > Issues > UpdatedIssueTitle (first one)
+    Click Edit Issue Button (pencil icon)
+    Click Delete Button From Dropdown
+    Confirm Deletion In Modal
+    Verify Success Message "Issue was successfully deleted"
+    Verify Deleted Issue No Longer Appears In Issues List
+
+# Negative Tests
+
+Create issue with empty title
+    Navigate To Issues Page    [ProjectName] > Issues
+    Click New Issue Button
+    Input Issue Title    EmptyTitle
+    Input Issue Description    Description without title
+    Click Create Issue Button
+    Verify Error Message "Title can't be blank" Is Displayed
+    Verify Issue Is Not Created
+
+Create issue with extremely long title (boundary testing)
+    Navigate To Issues Page    [ProjectName] > Issues
+    Click New Issue Button
+    Input Issue Title    LongTitle
+    Input Issue Description    Testing title length limit
+    Click Create Issue Button
+    Verify System Handles Long Title (truncated or error message based on GitLab's limit - typically 255 characters)
+
+Delete non-existent issue
+    Attempt To Access Issue With Invalid ID    [ProjectName] /-/issues/999999999
+    Verify 404 Not Found Page Or Error Message Is Displayed
+
+Update issue that doesn't exist
+    Attempt To Edit Issue With Invalid ID    [ProjectName] /-/issues/999999999/edit
+    Verify Error Message Or 404 Page Is Displayed

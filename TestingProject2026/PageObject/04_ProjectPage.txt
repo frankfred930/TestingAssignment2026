@@ -1,0 +1,100 @@
+#******************** Settings ************************
+
+*** Settings ***
+
+Documentation	Project Test scenario. CRUD Operation: Create, Read, Update, Delete. Testing project creation from blank and template, updating project name, deleting projects.
+
+Pre Condition	User is logged into GitLab with valid credentials and on dashboard page
+Post Condition	Clean up created projects (delete test projects)
+Tags	Project, TS-3-Project, CRUD, Positive, Negative
+
+#******************* Common Variables ********************
+
+*** Variables ***
+
+ProjectUrl = https://gitlab.com/projects/new
+BlankProjectName = ********************
+TemplateProjectName = ********************
+UpdatedProjectName = ********************
+DuplicateProjectName = ********************
+EmptyProjectName = 
+SpecialCharProjectName = Project@#$%^&*
+
+#******************** Test Cases *************************
+
+*** Test Cases ***
+
+# Positive Tests
+
+Create blank project
+    Navigate To New Project Page    ProjectUrl
+    Select Create Blank Project Option
+    Input Project Name    BlankProjectName
+    Input Project Slug    (Auto-generated from name)
+    Select Visibility Level    Private (Recommended for testing)
+    Click Create Project Button
+    Verify Page Should Contain Project 'BlankProjectName' was successfully created.
+    Verify User Is Redirected To Project Homepage
+
+Create template project
+    Navigate To New Project Page    ProjectUrl
+    Select Create From Template Option
+    Choose A Template    (e.g., "HTML5 Boilerplate" or any available template)
+    Input Project Name    TemplateProjectName
+    Click Create Project Button
+    Verify Page Should Contain Project 'TemplateProjectName' was successfully created.
+    Verify Template Files Are Present In Repository
+
+Update name of template project
+    Precondition: Template project already exists
+    Navigate To Existing Project    TemplateProjectName
+    Go To Project Settings    Settings > General
+    Expand Advanced Or General Section
+    Click Edit Project Name
+    Input New Project Name    UpdatedProjectName
+    Save Changes
+    Verify Page Shows Updated Project Name: UpdatedProjectName
+    Verify Success Message "Project was successfully updated"
+
+Delete template project
+    Precondition: Template project exists
+    Navigate To Project Settings    UpdatedProjectName > Settings > General
+    Scroll To Advanced Section
+    Click Remove/Delete Project Button
+    Confirm Project Name For Deletion    UpdatedProjectName
+    Click Confirm Delete Button
+    Verify Success Message "Project 'UpdatedProjectName' is being deleted"
+    Verify Project No Longer Appears In Project List
+
+Validate that message is showing Project 'First project' was successfully created
+    Navigate To New Project Page    ProjectUrl
+    Select Create Blank Project Option
+    Input Project Name    First project
+    Click Create Project Button
+    Verify Success Banner Contains: Project 'First project' was successfully created.
+
+# Negative Tests
+
+Create a blank project with the previous same name
+    Precondition: A project named '********************' already exists
+    Navigate To New Project Page    ProjectUrl
+    Select Create Blank Project Option
+    Input Project Name    DuplicateProjectName
+    Click Create Project Button
+    Verify Error Message "Name has already been taken" Or "Project path already exists" Is Displayed
+    Verify Project Is Not Created
+
+Create project with empty name
+    Navigate To New Project Page    ProjectUrl
+    Select Create Blank Project Option
+    Input Project Name    EmptyProjectName
+    Click Create Project Button
+    Verify Error Message "Name can't be blank" Or Validation Error Is Displayed
+    Verify Project Creation Is Blocked
+
+Create project with special characters in name (GitLab limitations)
+    Navigate To New Project Page    ProjectUrl
+    Select Create Blank Project Option
+    Input Project Name    SpecialCharProjectName
+    Click Create Project Button
+    Verify Whether Special Characters Are Accepted Or Rejected With Error Message
